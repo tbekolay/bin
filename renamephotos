@@ -1,0 +1,179 @@
+#!/usr/bin/env python
+"""Renames photos. Uses EXIF data for JPEG and TIFF.
+
+Usage: renamephotos [-rt] [-n|-o|-s] [--move=PATH] [--sha=N] FILE ...
+
+-r --recursive
+    Dive into directories; otherwise, directories are ignored
+-t --test
+    Shows what files would be renamed without renaming them
+-n --rename
+    Always rename files when trying to rename to an existing name
+-o --overwrite
+    Always overwrite files when trying to rename to an existing name
+-s --skip
+    Always skip files when trying to rename to an existing name
+-m PATH --move=PATH
+    Also move all renamed photos to PATH
+--sha=N
+    Instead of using dates, renames files to the first N characters
+    of the SHA1 hash
+
+"""
+
+__version__ = '0.2.0'
+
+if __name__ != '__main__':
+    raise ImportError("Don't import me, bro!")
+
+import filecmp
+import hashlib
+import os.path
+import sys
+import time
+
+if not os.environ.get('VIRTUAL_ENV', '').endswith('images'):
+    home = os.path.expanduser('~')
+    venv_home = os.environ.get('WORKON_HOME',
+                               os.path.join(home, '.virtualenvs'))
+    venv = os.path.join(venv_home, 'images')
+    if os.path.exists(venv):
+        activate_this = os.path.join(venv, 'bin', 'activate_this.py')
+        execfile(activate_this, dict(__file__=activate_this))
+
+from docopt import docopt
+import exifread
+
+
+def handle_duplicate(orig, dest, choice=None):
+    while os.path.exists(dest):
+        print "{} exists.".format(dest),
+        if filecmp.cmp(orig, dest):
+            print "Files appear to be the same.",
+        else:
+            print "Files appear to be different.",
+
+        if choice is None:
+            choice = raw_input("Overwrite, skip, or rename? [o/s/r]: ")
+        else:
+            print ""
+
+        if choice.lower() == 'r' or choice.lower() == 'rename':
+            dest = os.path.join(os.path.dirname(dest),
+                                raw_input("New name: "))
+        elif choice.lower() == 'o' or choice.lower() == 'overwrite':
+            break
+        else:
+            print "Skipping {}.".format(orig)
+            return None
+    return dest
+
+
+def rename_photos(options, renamed):
+    mvdir = None
+    if options['--move'] is not None:
+        mvdir = os.path.expanduser(options['--move'])
+
+    for each in sorted(renamed.keys()):
+        outdir = os.path.dirname(renamed[each])
+        if mvdir is not None:
+            outdir = mvdir
+        suffix = os.path.splitext(renamed[each])[1]
+        new_path = os.path.join(outdir, each) + suffix
+
+        if os.path.exists(new_path):
+            choice = None
+            if options['--rename']:
+                choice = 'r'
+            elif options['--overwrite']:
+                choice = 'o'
+            elif options['--skip']:
+                choice = 's'
+            new_path = handle_duplicate(renamed[each], new_path, choice)
+            if new_path is None:
+                continue
+
+        try:
+            if not options['--test']:
+                os.rename(renamed[each], new_path)
+            print renamed[each] + ' -> ' + new_path
+        except:
+            print '%s: Could not rename' % renamed[each]
+
+
+def get_date(path):
+    """EXIF DateTime format is YYYY:MM:DD HH:MM:SS"""
+    with open(path, 'rb') as fp:
+        data = exifread.process_file(fp, details=False, debug=False)
+
+    if data:
+        datetime = data.get('EXIF DateTimeOriginal', None)
+
+        if datetime is not None:
+            date_and_time = str(datetime).split(' ')
+            date = date_and_time[0].split(':')
+            time_ = date_and_time[1].split(':')
+            return '-'.join(date) + ' ' + '.'.join(time_)
+
+    # Either no EXIf data or no DateTimeOriginal entry
+    datetime = time.localtime(os.path.getctime(path))
+    return "%04d-%02d-%02d %02d.%02d.%02d" % (
+        datetime.tm_year, datetime.tm_mon, datetime.tm_mday,
+        datetime.tm_hour, datetime.tm_min, datetime.tm_sec)
+
+
+def get_sha(path, n):
+    if n < 4:
+        n = 4
+    elif n > 40:
+        n = 40
+    with open(path, 'rb') as fp:
+        sha = hashlib.sha1(fp.read()).hexdigest()
+    return sha[:n]
+
+
+def process_photo(path, options, renamed):
+    if options['--sha'] is None:
+        key = get_date(path)
+    else:
+        key = get_sha(path, int(options['--sha']))
+
+    if key + '-1' in renamed.keys():
+        i = 3
+        while '{}-{:d}'.format(key, i) in renamed.keys():
+            i += 1
+        renamed['{}-{:d}'.format(key, i)] = path
+    elif key in renamed.keys():
+        renamed[key + '-1'] = renamed[key]
+        del renamed[key]
+        renamed[key + '-2'] = path
+    else:
+        renamed[key] = path
+
+
+def process_photos(paths, options, renamed):
+    for path in paths:
+        path = os.path.expanduser(path)
+        if os.path.isdir(path):
+            if options['--recursive']:
+                process_photos([os.path.join(path, fname) for fname
+                                in os.listdir(path)], options, renamed)
+        else:
+            process_photo(path, options, renamed)
+
+
+options = docopt(__doc__, version=__version__)
+if options['--move'] is not None:
+    outdir = os.path.expanduser(options['--move'])
+    if not os.path.exists(outdir):
+        ans = raw_input(
+            "Directory %s does not exist. Create it? [y/n]: " % outdir)
+        if ans.lower() == 'y' or ans.lower() == 'yes':
+            os.makedirs(outdir, mode=0755)
+        else:
+            "Exiting!"
+            sys.exit()
+
+renamed = {}
+process_photos(options['FILE'], options, renamed)
+rename_photos(options, renamed)
