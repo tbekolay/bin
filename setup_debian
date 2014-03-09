@@ -1,0 +1,100 @@
+#!/bin/bash
+source common.sh
+
+_PWD=`pwd`
+echo "======================================================="
+echo "Hey Trevor! New Debian install huh? Hope nothing broke!"
+echo "======================================================="
+
+section "Installing nvidia drivers"
+install_packages build-essential nvidia-driver nvidia-xconfig
+echo "--- Generating xorg.conf"
+sudo nvidia-xconfig
+sudo rm -f /etc/X11/xorg.conf.*
+
+if ! package_installed "google-chrome-beta"; then
+    section "Installing Google Chrome"
+    CHROME=google-chrome-beta_current_amd64.deb
+    echo "--- Downloading $CHROME"
+    wget -O /tmp/chrome.deb https://dl.google.com/linux/direct/$CHROME
+    echo "--- Installing Chrome"
+    sudo gdebi /tmp/chrome.deb
+    if [[ $? == 0 ]]
+    then
+        "--- Chrome installed"
+    else
+        echo "--- Error installing Chrome"
+    fi
+    rm -f /tmp/chrome.deb
+fi
+
+section "Setting up zsh"
+install_packages zsh
+if [[ `grep $USER /etc/passwd` != */bin/zsh ]]; then
+    echo "--- Setting ZSH as $USER's shell"
+    chsh -s /bin/zsh
+fi
+if [[ ! -d $CODE/prezto ]]; then
+    echo "--- Getting prezto"
+    git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git $CODE/prezto
+fi
+if [[ ! -h $HOME/.zprezto ]]; then
+    echo "--- Linking prezto"
+    ln -s "$CODE/prezto" "$HOME/.zprezto"
+fi
+for ZFILE in zlogin zlogout zpreztorc zprofile zshenv zshrc; do
+    echo "--- Linking $ZFILE"
+    rm -f "$HOME/.$ZFILE"
+    ln -s "$CODE/prezto/runcoms/$ZFILE" "$HOME/.$ZFILE"
+done
+
+section "Setting up emacs"
+install_packages emacs24 emacs24-common-non-dfsg gawk
+if [[ ! -d $CODE/prelude ]]; then
+    echo "--- Getting prelude"
+    git clone -b tbekolay https://github.com/tbekolay/prelude.git $CODE/prelude
+fi
+if [[ ! -h $HOME/.emacs.d ]]; then
+    echo "--- Removing $HOME/.emacs.d"
+    rm -rf "$HOME/.emacs.d"
+    echo "--- Linking prelude"
+    ln -s "$CODE/prelude" "$HOME/.emacs.d"
+fi
+
+if ! package_installed "fontconfig-infinality"; then
+    section "Setting up Infinality font hinting"
+    install_packages devscripts
+    cd $CODE
+    if [[ ! -d "Debian-Packages" ]]; then
+        git clone https://github.com/chenxiaolong/Debian-Packages.git
+    fi
+    cd Debian-Packages
+    cd freetype-infinality/
+    echo "--- Checking freetype dependencies"
+    dpkg-checkbuilddeps
+    sanitycheck
+    cd ../fontconfig-infinality/
+    echo "--- Checking fontconfig dependencies"
+    dpkg-checkbuilddeps
+    sanitycheck
+    cd ../freetype-infinality/
+    echo "--- Building freetype-infinality..."
+    ./build.sh
+    sanitycheck
+    echo "--- Building fontconfig-infinality..."
+    cd ../fontconfig-infinality/
+    ./build.sh
+    sanitycheck
+    cd ..
+    sudo dpkg -i freetype-infinality/*.deb fontconfig-infinality/*.deb
+    sanitycheck
+    rm -rf $CODE/Debian-Packages
+    cd $_PWD
+fi
+
+if [[ ! -d $CODE/dotfiles ]]; then
+    section "Setting up dotfiles"
+    git clone https://github.com/tbekolay/dotfiles.git $CODE/dotfiles
+fi
+
+daily_debian

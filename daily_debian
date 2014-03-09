@@ -1,0 +1,27 @@
+#!/bin/bash
+source common.sh
+
+for DOTFILE in $CODE/dotfiles/*; do
+    TARGET=$HOME/.`basename $DOTFILE`
+    if [[ ! -h $TARGET || `readlink $TARGET` != $DOTFILE ]]; then
+        echo "--- Linking $TARGET to $DOTFILE"
+        rm -rf "$TARGET"
+        ln -s "$DOTFILE" "$TARGET"
+    fi
+done
+
+INSTALL=$(cat .install.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+install_packages ${INSTALL[@]}
+
+REMOVE=$(cat .remove.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+remove_packages ${REMOVE[@]}
+
+# for K in "${!GCONF[@]}"
+# do
+#     gconftool-2 --type=string --set $K "${GCONF[$K]}"
+# done
+
+# for K in "${!GSETTINGS[@]}"
+# do
+#     gsettings set $K "${GSETTINGS[$K]}"
+# done
