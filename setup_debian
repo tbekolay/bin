@@ -7,7 +7,7 @@ echo "Hey Trevor! New Debian install huh? Hope nothing broke!"
 echo "======================================================="
 
 section "Installing nvidia drivers"
-install_packages build-essential nvidia-driver nvidia-xconfig
+install_packages build-essential nvidia-driver nvidia-xconfig nvidia-settings
 echo "--- Generating xorg.conf"
 sudo nvidia-xconfig
 sudo rm -f /etc/X11/xorg.conf.*
