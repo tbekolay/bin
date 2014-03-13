@@ -1,19 +1,11 @@
 #!/bin/bash
 source common.sh
+source $CODE/dotfiles/link.sh
 
-for DOTFILE in $CODE/dotfiles/*; do
-    TARGET=$HOME/.`basename $DOTFILE`
-    if [[ ! -h $TARGET || `readlink $TARGET` != $DOTFILE ]]; then
-        echo "--- Linking $TARGET to $DOTFILE"
-        rm -rf "$TARGET"
-        ln -s "$DOTFILE" "$TARGET"
-    fi
-done
-
-INSTALL=$(cat .install.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+INSTALL=$(cat $HOME/.install.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
 install_packages ${INSTALL[@]}
 
-REMOVE=$(cat .remove.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+REMOVE=$(cat $HOME/.remove.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
 remove_packages ${REMOVE[@]}
 
 # for K in "${!GCONF[@]}"
