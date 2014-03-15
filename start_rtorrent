@@ -4,12 +4,11 @@ if [[ -e "/tmp/rtorrent.session" ]]; then
     echo "rtorrent already started. Attaching to session."
 else
     echo "Starting rtorrent."
-    echo "  C-\\ : Detach"
-    echo "  C-q : Quit"
-    echo "  Backspace : Add torrent"
-    echo "  C-s : Start download"
-    echo "  C-d : Stop download"
-    echo "  C-k : Close torrent and files"
 fi
+echo "  C-\\ : Detach"
+echo "  C-q : Quit"
+echo "  Backspace : Add (file or URL)"
+echo "  C-s : Start"
+echo "  C-d : Stop; remove"
 read -p "Press [Enter] to continue."
 dtach -A /tmp/rtorrent.session rtorrent
