@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+source common.sh
+source macosx.sh
+source $CODE/dotfiles/link.sh
+
+INSTALL=$(cat $HOME/.install.brew | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+install_packages ${INSTALL[@]}
+
+REMOVE=$(cat $HOME/.remove.brew | grep -v "^$" | grep -v "^#" | tr "\n" " ")
+remove_packages ${REMOVE[@]}

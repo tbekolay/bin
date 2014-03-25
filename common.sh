@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-check_file() {
+checkfile() {
     if [[ -f $1 ]]; then
         read -p "$1 exists. Overwrite? [y/n] " -n 1 -r
         echo
@@ -33,6 +33,16 @@ section () {
     echo $1
     head -c ${#1} < /dev/zero | tr '\0' $CH
     echo
+}
+
+checkandlink () {
+    SRC=$1
+    DST=$2
+    if [[ ! -h $DST || `readlink $DST` != $SRC ]]; then
+        echo "--- Linking $DST to $SRC"
+        rm -rf "$DST"
+        ln -s "$SRC" "$DST"
+    fi
 }
 
 CODE=$HOME/Code

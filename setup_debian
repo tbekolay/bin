@@ -3,9 +3,7 @@ source common.sh
 source debian.sh
 
 _PWD=`pwd`
-echo "======================================================="
-echo "Hey Trevor! New Debian install huh? Hope nothing broke!"
-echo "======================================================="
+section "Hey Trevor! New Debian install huh? Hope nothing broke!" "="
 
 section "Installing nvidia drivers"
 install_packages build-essential nvidia-driver nvidia-xconfig nvidia-settings
@@ -32,21 +30,18 @@ fi
 section "Setting up zsh"
 install_packages zsh
 if [[ `grep $USER /etc/passwd` != */bin/zsh ]]; then
-    echo "--- Setting ZSH as $USER's shell"
+    echo "--- Setting zsh as $USER's shell"
     chsh -s /bin/zsh
 fi
 if [[ ! -d $CODE/prezto ]]; then
     echo "--- Getting prezto"
     git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git $CODE/prezto
 fi
-if [[ ! -h $HOME/.zprezto ]]; then
-    echo "--- Linking prezto"
-    ln -s "$CODE/prezto" "$HOME/.zprezto"
-fi
+checkandlink "$CODE/prezto" "$HOME/.zprezto"
 for ZFILE in zlogin zlogout zpreztorc zprofile zshenv zshrc; do
-    echo "--- Linking $ZFILE"
-    rm -f "$HOME/.$ZFILE"
-    ln -s "$CODE/prezto/runcoms/$ZFILE" "$HOME/.$ZFILE"
+    SRC="$CODE/prezto/runcoms/$ZFILE"
+    DST="$HOME/.$ZFILE"
+    checkandlink "$SRC" "$DST"
 done
 
 section "Setting up emacs"
@@ -55,12 +50,7 @@ if [[ ! -d $CODE/prelude ]]; then
     echo "--- Getting prelude"
     git clone -b tbekolay https://github.com/tbekolay/prelude.git $CODE/prelude
 fi
-if [[ ! -h $HOME/.emacs.d ]]; then
-    echo "--- Removing $HOME/.emacs.d"
-    rm -rf "$HOME/.emacs.d"
-    echo "--- Linking prelude"
-    ln -s "$CODE/prelude" "$HOME/.emacs.d"
-fi
+checkandlink "$CODE/prelude" "$HOME/.emacs.d"
 
 if ! package_installed "fontconfig-infinality"; then
     section "Setting up Infinality font hinting"
