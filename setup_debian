@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 source common.sh
+source debian.sh
 
 _PWD=`pwd`
 echo "======================================================="

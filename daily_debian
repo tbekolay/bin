@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 source common.sh
+source debian.sh
 source $CODE/dotfiles/link.sh
 
 INSTALL=$(cat $HOME/.install.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
