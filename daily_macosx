@@ -3,6 +3,9 @@ source common.sh
 source macosx.sh
 source $CODE/dotfiles/link.sh
 
+brew update
+brew upgrade
+
 INSTALL=$(cat $HOME/.install.brew | grep -v "^$" | grep -v "^#" | tr "\n" " ")
 install_packages ${INSTALL[@]}
 

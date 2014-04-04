@@ -3,6 +3,10 @@ source common.sh
 source debian.sh
 source $CODE/dotfiles/link.sh
 
+sudo apt-get update
+sudo apt-get dist-upgrade
+sudo apt-get autoremove
+
 INSTALL=$(cat $HOME/.install.apt | grep -v "^$" | grep -v "^#" | tr "\n" " ")
 install_packages ${INSTALL[@]}
 
