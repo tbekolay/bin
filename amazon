@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+"""Make a query to the Amazon product API.
+
+Usage: amazon QUERY
+
+"""
+
+__version__ = '0.1.0'
+
+if __name__ != '__main__':
+    raise ImportError("Don't import me, bro!")
+
+import sys
+
+import amazonproduct
+import click
+from lxml import etree
+
+
+# class Amazon(object):
+#     def __init__(self):
+#         self.api = amazonproduct.API(locale='ca')
+
+@click.group()
+@click.pass_context
+def cli(ctx):
+    ctx.obj = amazonproduct.API(locale='ca')
+
+@cli.command()
+@click.argument('query', type=str)
+@click.pass_obj
+def lookup(api, query):
+    """Look up the ASIN of an item."""
+    items = api.item_search('All', Keywords=query)
+    if items.results == 0:
+        asin = "Item not found."
+    elif items.results == 1:
+        asin = next(iter(items)).ASIN
+    else:
+        asins = []
+        prompt = []
+        for i, item in enumerate(items):
+            prompt.append("%3d. %s" % (i+1, item.ItemAttributes.Title))
+            asins.append(item.ASIN)
+        prompt.append("%d matches found. Please select one" % (i+1))
+        choice = -1
+        while choice < 1 or choice > i + 1:
+            choice = click.prompt("\n".join(prompt), type=int)
+        asin = asins[choice - 1]
+    click.echo(asin)
+
+# etree.tostring(item, pretty_print=True)
+
+@cli.command()
+@click.argument('asin', type=str)
+@click.pass_obj
+def prices(api, asin):
+    item = api.item_lookup(asin,
+                           Condition="All",
+                           ResponseGroup="Offers,ShippingCharges")
+    item = item.Items.Item
+    for offer in item.Offers.iterchildren():
+        if not offer.tag.endswith("Offer"):
+            continue
+        ship = offer.OfferListing.IsEligibleForSuperSaverShipping
+        click.echo("%s: %s%s" % (offer.OfferAttributes.Condition,
+                                 offer.OfferListing.Price.FormattedPrice,
+                                 "" if ship else " + shipping"))
+    click.echo("Details: %s" % item.Offers.MoreOffersUrl)
+
+cli()
