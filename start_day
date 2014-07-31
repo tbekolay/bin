@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+"""Start your day!
+
+Usage: start_day
+
+"""
+from __future__ import print_function
+
+if __name__ != '__main__':
+    raise ImportError("Don't import me, bro!")
+
+import functools
+
+from common import activate_venv, answer, say
+
+activate_venv("pim")
+
+from blessings import Terminal
+from docopt import docopt
+import toml
+
+__version__ = '0.1.0'
+
+t = Terminal()
+
+options = docopt(__doc__, version=__version__)
+
+cal_evts = [
+    answer('Wednesday 12:00-1pm', t.red('Lunch with Emily'), None),
+    answer('Thursday All Day', 'Something else', None),
+    answer('Thursday 2:00-2:30pm', 'Another thing', None),
+]
+
+day = {}
+
+say(t, "Google Calendar events for the next 5 days:", answers=cal_evts)
+say(t, "What would you like to work on this morning?", answers=[
+    answer(str(ix+1), project, lambda: day.__setitem__('morning', project))
+    for ix, project in enumerate(['Programming', 'Writing', 'Errands'])],
+    prompt="?")
+
+print(day)

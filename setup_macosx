@@ -43,4 +43,7 @@ if [[ ! -d $CODE/dotfiles ]]; then
     git clone https://github.com/tbekolay/dotfiles.git $CODE/dotfiles
 fi
 
+# if gpg key not installed then
+# gpg2 --gen-key
+
 daily_macosx
