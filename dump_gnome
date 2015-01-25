@@ -1,0 +1,14 @@
+#!/bin/bash
+source functions.sh
+
+check_file "gconftool-2.txt"
+if [[ $? == 0 ]]
+then
+    gconftool-2  --recursive-list / > gconftool-2.txt
+fi
+
+check_file "gsettings.txt"
+if [[ $? == 0 ]]
+then
+    gsettings list-recursively > gsettings.txt
+fi
