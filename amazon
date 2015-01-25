@@ -11,61 +11,88 @@ if __name__ != '__main__':
     raise ImportError("Don't import me, bro!")
 
 import sys
+from common import activate_venv
+
+activate_venv('amazon')
 
 import amazonproduct
 import click
 from lxml import etree
 
 
-# class Amazon(object):
-#     def __init__(self):
-#         self.api = amazonproduct.API(locale='ca')
-
 @click.group()
+@click.option('--locale', type=str, default='ca')
 @click.pass_context
-def cli(ctx):
-    ctx.obj = amazonproduct.API(locale='ca')
+def cli(ctx, locale):
+    ctx.obj = amazonproduct.API(locale=locale)
+
 
 @cli.command()
-@click.argument('query', type=str)
+@click.argument('queries', type=click.File('rb'), default='-')
 @click.pass_obj
-def lookup(api, query):
-    """Look up the ASIN of an item."""
-    items = api.item_search('All', Keywords=query)
-    if items.results == 0:
-        asin = "Item not found."
-    elif items.results == 1:
-        asin = next(iter(items)).ASIN
-    else:
-        asins = []
-        prompt = []
-        for i, item in enumerate(items):
-            prompt.append("%3d. %s" % (i+1, item.ItemAttributes.Title))
-            asins.append(item.ASIN)
-        prompt.append("%d matches found. Please select one" % (i+1))
-        choice = -1
-        while choice < 1 or choice > i + 1:
-            choice = click.prompt("\n".join(prompt), type=int)
-        asin = asins[choice - 1]
-    click.echo(asin)
+def lookup(api, queries):
+    """Look up the ASIN of an item or items."""
+    for query in queries:
+        query = query.rstrip('\n')
+        # Temp hack
+        if query.startswith('*'):
+            click.echo(query)
+            continue
+        try:
+            items = api.item_search('All', Keywords=query)
+        except amazonproduct.errors.NoExactMatchesFound:
+            click.echo("Item not found")
+            continue
+
+        if items.results == 1:
+            asin = next(iter(items)).ASIN
+        else:
+            asins = []
+            prompt = []
+            for i, item in enumerate(items):
+                prompt.append("%3d. %s\n     %s" % (
+                    i+1, item.ItemAttributes.Title, item.DetailPageURL))
+                asins.append(item.ASIN)
+            prompt.append("%d matches found for '%s'. Please select one"
+                          % (i+1, query))
+            choice = -1
+            while choice < 1 or choice > i + 1:
+                choice = click.prompt("\n".join(prompt), type=int)
+            asin = asins[choice - 1]
+        click.echo(asin)
+
 
 # etree.tostring(item, pretty_print=True)
 
 @cli.command()
-@click.argument('asin', type=str)
+@click.argument('asins', type=click.File('rb'), default='-')
 @click.pass_obj
-def prices(api, asin):
-    item = api.item_lookup(asin,
-                           Condition="All",
-                           ResponseGroup="Offers,ShippingCharges")
-    item = item.Items.Item
-    for offer in item.Offers.iterchildren():
-        if not offer.tag.endswith("Offer"):
+def prices(api, asins):
+    """Look up the current offers of an item or items."""
+    for asin in asins:
+        asin = asin.rstrip('\n')
+        if not asin.startswith('B'):
+            click.echo(asin)
             continue
-        ship = offer.OfferListing.IsEligibleForSuperSaverShipping
-        click.echo("%s: %s%s" % (offer.OfferAttributes.Condition,
-                                 offer.OfferListing.Price.FormattedPrice,
-                                 "" if ship else " + shipping"))
-    click.echo("Details: %s" % item.Offers.MoreOffersUrl)
+        item = api.item_lookup(asin,
+                               Condition="All",
+                               ResponseGroup="Offers,ShippingCharges")
+
+        item = item.Items.Item
+        offers = []
+        for offer in item.Offers.iterchildren():
+            if not offer.tag.endswith("Offer"):
+                continue
+            ship = offer.OfferListing.IsEligibleForSuperSaverShipping == '0'
+            offers.append((float(offer.OfferListing.Price.Amount) / 100.0
+                           + (0.0 if ship else 5.0),
+                           offer.OfferAttributes.Condition))
+        if len(offers) == 0:
+            click.echo("%s: No offers %s" % (asin, item.Offers.MoreOffersUrl))
+        else:
+            lowest = sorted(offers)[0]
+            click.echo("%s: %.2f (%s) %s" % (
+                asin, lowest[0], lowest[1], item.Offers.MoreOffersUrl))
+
 
 cli()
