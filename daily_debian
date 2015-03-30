@@ -3,6 +3,8 @@ source common.sh
 source debian.sh
 source $CODE/dotfiles/link.sh
 
+set -o xtrace
+
 sudo apt-get update
 sudo apt-get dist-upgrade
 sudo apt-get autoremove
