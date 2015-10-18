@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+if [ ! $# == 2 ]; then
+    echo "Usage: watchhockey [game-id] [home|away]"
+    exit 1
+fi
+
+if [[ $($DIR/etchosts check nlsk.neulion.com) != "127.0.0.1"* ]]; then
+   sudo $DIR/etchosts add nlsk.neulion.com 127.0.0.1
+fi
+
+vlc &> /dev/null &
+read -p "Open the /r/hockey channel; press [Enter] when done."
+sudo java -jar $HOME/Dropbox/hockey/FuckNeulionV2.3.jar "$1" "$2"
