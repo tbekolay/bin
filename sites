@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+export SITES=(
+    reddit.com
+    www.reddit.com
+    youtube.com
+    www.youtube.com
+    facebook.com
+    www.facebook.com
+    plus.google.com
+)
