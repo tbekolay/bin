@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+for f in "$@"; do
+  wc $f --words;
+done | cut -f1 -d" " | paste -sd+ | bc
