@@ -20,9 +20,9 @@ update() {
 
 if [[ $# == 1 ]]; then
     outfile=${1:7}
-    update $1 "${outfile##/*/}"
+    update "$1" "${outfile##/*/}"
 elif [[ $# == 2 ]]; then
-    update $1 $2
+    update "$1" "$2"
 else
     update https://raw.githubusercontent.com/pshved/timeout/master/timeout timeout
     update https://gist.githubusercontent.com/mikeflynn/4278796/raw/etchosts.sh etchosts

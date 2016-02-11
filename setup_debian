@@ -2,7 +2,7 @@
 source common.sh
 source debian.sh
 
-_PWD=`pwd`
+_PWD=$(pwd)
 section "Hey Trevor! New Debian install huh? Hope nothing broke!" "="
 
 section "Installing nvidia drivers"
@@ -29,13 +29,13 @@ fi
 
 section "Setting up zsh"
 install_packages zsh
-if [[ `grep $USER /etc/passwd` != */bin/zsh ]]; then
+if [[ $(grep "$USER" /etc/passwd) != */bin/zsh ]]; then
     echo "--- Setting zsh as $USER's shell"
     chsh -s /bin/zsh
 fi
 if [[ ! -d $CODE/prezto ]]; then
     echo "--- Getting prezto"
-    git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git $CODE/prezto
+    git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git "$CODE/prezto"
 fi
 checkandlink "$CODE/prezto" "$HOME/.zprezto"
 for ZFILE in zlogin zlogout zpreztorc zprofile zshenv zshrc; do
@@ -45,47 +45,14 @@ for ZFILE in zlogin zlogout zpreztorc zprofile zshenv zshrc; do
 done
 
 section "Setting up emacs"
-install_packages emacs24 emacs24-common-non-dfsg gawk
+install_packages emacs
 if [[ ! -d $CODE/prelude ]]; then
     echo "--- Getting prelude"
-    git clone -b tbekolay https://github.com/tbekolay/prelude.git $CODE/prelude
+    git clone -b tbekolay https://github.com/tbekolay/prelude.git "$CODE/prelude"
 fi
 checkandlink "$CODE/prelude" "$HOME/.emacs.d"
 
-if ! package_installed "fontconfig-infinality"; then
-    section "Setting up Infinality font hinting"
-    install_packages devscripts
-    cd $CODE
-    if [[ ! -d "Debian-Packages" ]]; then
-        git clone https://github.com/chenxiaolong/Debian-Packages.git
-    fi
-    cd Debian-Packages
-    cd freetype-infinality/
-    echo "--- Checking freetype dependencies"
-    dpkg-checkbuilddeps
-    sanitycheck
-    cd ../fontconfig-infinality/
-    echo "--- Checking fontconfig dependencies"
-    dpkg-checkbuilddeps
-    sanitycheck
-    cd ../freetype-infinality/
-    echo "--- Building freetype-infinality..."
-    ./build.sh
-    sanitycheck
-    echo "--- Building fontconfig-infinality..."
-    cd ../fontconfig-infinality/
-    ./build.sh
-    sanitycheck
-    cd ..
-    sudo dpkg -i freetype-infinality/*.deb fontconfig-infinality/*.deb
-    sanitycheck
-    rm -rf $CODE/Debian-Packages
-    cd $_PWD
-fi
-
 if [[ ! -d $CODE/dotfiles ]]; then
     section "Setting up dotfiles"
-    git clone https://github.com/tbekolay/dotfiles.git $CODE/dotfiles
+    git clone https://github.com/tbekolay/dotfiles.git "$CODE/dotfiles"
 fi
-
-daily_debian

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-$HOME/Code/dotfiles/link.sh
+"$HOME/Code/dotfiles/link.sh"

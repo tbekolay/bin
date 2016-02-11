@@ -2,6 +2,6 @@
 source sites
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 for site in "${SITES[@]}"; do
-    sudo $DIR/etchosts remove "$site"
+    sudo "$DIR/etchosts" remove "$site"
 done
 sudo rm -v /etc/hosts.bak

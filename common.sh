@@ -28,21 +28,21 @@ section () {
     if [[ $# -eq 2 ]]; then
         CH=$2
     fi
-    head -c ${#1} < /dev/zero | tr '\0' $CH
+    head -c ${#1} < /dev/zero | tr '\0' "$CH"
     echo
-    echo $1
-    head -c ${#1} < /dev/zero | tr '\0' $CH
+    echo "$1"
+    head -c ${#1} < /dev/zero | tr '\0' "$CH"
     echo
 }
 
 checkandlink () {
     SRC=$1
     DST=$2
-    if [[ ! -h $DST || `readlink $DST` != $SRC ]]; then
+    if [[ ! -h $DST || $(readlink "$DST") != $SRC ]]; then
         echo "--- Linking $DST to $SRC"
         rm -rf "$DST"
         ln -s "$SRC" "$DST"
     fi
 }
 
-CODE=$HOME/Code
+export CODE=$HOME/Code

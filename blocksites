@@ -2,5 +2,5 @@
 source sites
 DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 for site in "${SITES[@]}"; do
-    sudo $DIR/etchosts add $site 127.0.0.1
+    sudo "$DIR/etchosts add $site 127.0.0.1"
 done

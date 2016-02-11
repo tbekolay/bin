@@ -13,7 +13,7 @@ section "Setting up emacs"
 install_packages emacs
 if [[ ! -d $CODE/prelude ]]; then
     echo "--- Getting prelude"
-    git clone -b tbekolay https://github.com/tbekolay/prelude.git $CODE/prelude
+    git clone -b tbekolay https://github.com/tbekolay/prelude.git "$CODE/prelude"
 fi
 checkandlink "$CODE/prelude" "$HOME/.emacs.d"
 
@@ -21,15 +21,15 @@ section "Setting up zsh"
 install_packages zsh
 if ! grep -qe "^/usr/local/bin/zsh$" "/etc/shells"; then
     echo "--- Adding zsh to /etc/shells"
-    sudo echo "/usr/local/bin/zsh" >> /etc/shells
+    echo "/usr/local/bin/zsh" | sudo tee -a /etc/shells
 fi
-if [[ `dscl . -read /Users/$USER UserShell` == "*/local/bin/zsh" ]]; then
+if [[ $(dscl . -read "/Users/$USER" UserShell) == "*/local/bin/zsh" ]]; then
     echo "--- Setting zsh as $USER's shell"
     chsh -s /usr/local/bin/zsh
 fi
 if [[ ! -d $CODE/prezto ]]; then
     echo "--- Getting prezto"
-    git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git $CODE/prezto
+    git clone --recursive -b tbekolay https://github.com/tbekolay/prezto.git "$CODE/prezto"
 fi
 checkandlink "$CODE/prezto" "$HOME/.zprezto"
 for ZFILE in zlogin zlogout zpreztorc zprofile zshenv zshrc; do
@@ -40,10 +40,8 @@ done
 
 if [[ ! -d $CODE/dotfiles ]]; then
     section "Setting up dotfiles"
-    git clone https://github.com/tbekolay/dotfiles.git $CODE/dotfiles
+    git clone https://github.com/tbekolay/dotfiles.git "$CODE/dotfiles"
 fi
 
 # if gpg key not installed then
 # gpg2 --gen-key
-
-daily_macosx

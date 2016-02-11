@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd $HOME
+cd "$HOME"
 if [[ -e "/tmp/rtorrent.session" ]]; then
     echo "rtorrent already started. Attaching to session."
 else
