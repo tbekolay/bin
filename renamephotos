@@ -79,7 +79,7 @@ def rename_photos(options, renamed):
         if mvdir is not None:
             outdir = mvdir
         suffix = os.path.splitext(renamed[each])[1]
-        new_path = os.path.join(outdir, each) + suffix
+        new_path = os.path.join(outdir, each) + suffix.lower()
 
         if os.path.exists(new_path):
             choice = None
@@ -111,15 +111,17 @@ def get_date(path):
 
         if datetime is not None:
             date_and_time = str(datetime).split(' ')
-            date = date_and_time[0].split(':')
-            time_ = date_and_time[1].split(':')
+            if len(date_and_time) > 1:
+                date = date_and_time[0].split(':')
+                time_ = date_and_time[1].split(':')
+            elif len(date_and_time) == 1:
+                date = date_and_time[0].split(':')[:3]
+                time_ = date_and_time[0].split(':')[3:]
             return '-'.join(date) + ' ' + '.'.join(time_)
 
     # Either no EXIf data or no DateTimeOriginal entry
     datetime = time.localtime(os.path.getctime(path))
-    return "%04d-%02d-%02d %02d.%02d.%02d" % (
-        datetime.tm_year, datetime.tm_mon, datetime.tm_mday,
-        datetime.tm_hour, datetime.tm_min, datetime.tm_sec)
+    return get_sha(path, n=12)
 
 
 def get_sha(path, n):
