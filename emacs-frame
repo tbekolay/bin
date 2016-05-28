@@ -1,0 +1,5 @@
+#!/bin/sh
+
+socket_file=$(lsof -c emacs | grep server | tr -s " " | head -1 | cut -d' ' -f9 | tr -d '\n')
+
+emacsclient --create-frame "$@" --socket-name="$socket_file"
