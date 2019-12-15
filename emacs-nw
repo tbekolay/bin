@@ -1,5 +1,13 @@
 #!/bin/sh
 
-socket_file=$(lsof -c emacs | grep server | tr -s " " | head -1 | cut -d' ' -f9 | tr -d '\n')
+EMACSCLIENT="emacsclient"
+EMACS="emacs"
+NCUT="9"
+if [[ $(uname) == 'Darwin' ]]; then
+    EMACSCLIENT="/usr/local/bin/emacsclient"
+    EMACS="Emacs"
+    NCUT="8"
+fi
 
-emacsclient --tty "$@" --socket-name="$socket_file"
+SOCKET_FILE=$(lsof -c "$EMACS" | grep server | tr -s " " | head -1 | cut -d' ' -f$NCUT | tr -d '\n')
+"$EMACSCLIENT" --tty "$@" --socket-name="$SOCKET_FILE"
